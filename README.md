@@ -2,7 +2,7 @@
 
 ![シークレット1](secret1.png)
 
-![シークレット2](secret2.png)# Welcome to your L
+![シークレット2](secret2.png)
 
 ![シークレット3](secret3.png)
 
