@@ -1,29 +1,21 @@
-# Welcome to your Lovable project
+![シークレット](secret.png)
 
-This project was built with [Lovable](https://lovable.dev).
+![シークレット1](secret1.png)
 
-## Build with Lovable
+![シークレット2](secret2.png)# Welcome to your Lovable project
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+![シークレット3](secret3.png)
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+![シークレット4](secret4.png)
+ここに綴る名前は、あなただけの秘密。
 
-## Development
+大切な人の名前を、好きな数だけ。
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+入力された名前は送信・保存されません。
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+![シークレット5](secret5.png)
 
-## Built with
+アプリ体験
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+https://secret-garden-freedom.vercel.app
+
