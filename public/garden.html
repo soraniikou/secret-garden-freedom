@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>secret garden</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Noto+Serif+JP:wght@200;300&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0a0a0f;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Cormorant Garamond','Noto Serif JP',serif;
+    min-height: 100vh;
+    overflow: hidden;
+    cursor: none;
+    transition: background 3s ease;
+  }
+  canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+  #c            { z-index:1; }
+  #rose-canvas  { z-index:2; opacity:0; transition:opacity 3s ease; }
+  #petal-canvas { z-index:15; opacity:0; transition:opacity 3s ease; }
+  #stage {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:10; padding:2rem;
+  }
+  #word {
+    font-size:clamp(1.12rem,2.4vw,1.76rem); font-weight:300;
+    letter-spacing:0.15em; text-align:center; line-height:1.6;
+    transition:opacity 1.5s ease,transform 1.5s ease;
+    cursor:pointer; user-select:none;
+    text-shadow:0 0 40px rgba(255,255,255,0.1);
+    white-space:pre-line; position:relative;
+  }
+  #word::after {
+    content:''; position:absolute; bottom:-8px; left:50%;
+    transform:translateX(-50%); width:0; height:1px;
+    background:rgba(255,255,255,0.4); transition:width 2s ease;
+  }
+  #word.touched::after { width:100%; }
+  #word-en {
+    margin-top:0.6rem; font-size:clamp(0.8rem,1.8vw,1.05rem);
+    font-style:italic; letter-spacing:0.1em;
+    color:rgba(255,255,255,0.45); text-align:center;
+    opacity:0; transition:opacity 1.2s ease;
+  }
+  #word-en.visible { opacity:1; }
+  #word-note {
+    margin-top:0.45rem; font-size:clamp(0.65rem,1.8vw,0.82rem);
+    letter-spacing:0.12em; color:rgba(255,255,255,0.42);
+    text-align:center; max-width:90vw;
+    opacity:0; transition:opacity 0.9s ease; pointer-events:none;
+  }
+  #word-note.visible { opacity:1; }
+  #word-note-en {
+    margin-top:0.75rem; font-size:clamp(0.78rem,1.95vw,0.936rem);
+    font-style:italic; letter-spacing:0.08em;
+    color:rgba(255,255,255,0.32); text-align:center;
+    opacity:0; transition:opacity 0.9s ease; pointer-events:none;
+    line-height:1.7; max-width:90vw;
+  }
+  #word-note-en.visible { opacity:1; }
+  #star-name-overlay {
+    position:fixed; inset:0; z-index:11; pointer-events:none;
+  }
+  .star-name-slot {
+    position:absolute; pointer-events:none;
+    transform:translate(-50%,0); text-align:center;
+  }
+  .star-name-input {
+    pointer-events:auto; cursor:text;
+    width:min(22vw,7.5rem); min-width:4rem;
+    padding:0.15rem 0.25rem 0.05rem;
+    font-family:'Noto Serif JP','Cormorant Garamond',serif;
+    font-size:clamp(0.694rem,1.792vw,0.874rem); letter-spacing:0.08em;
+    color:rgba(255,255,255,0.88);
+    background:transparent; border:none;
+    border-bottom:1px solid rgba(255,255,255,0.45);
+    outline:none; text-align:center;
+  }
+  .star-name-input::placeholder { color:rgba(255,255,255,0.2); }
+  .star-name-input:focus { border-bottom-color:rgba(255,255,255,0.75); }
+  #hint {
+    margin-top:3rem; font-size:0.85rem; letter-spacing:0.3em;
+    text-transform:lowercase; font-style:italic;
+    transition:opacity 1s ease; animation:breathe 3s ease-in-out infinite;
+    color:rgba(255,255,255,0.75);
+  }
+  @keyframes breathe { 0%,100%{opacity:0.55} 50%{opacity:0.9} }
+  #subtext {
+    margin-top:1.5rem; font-size:clamp(0.6rem,1.6vw,0.72rem);
+    font-style:italic; letter-spacing:0.1em; opacity:0;
+    text-align:center; line-height:2; max-width:400px;
+    transition:opacity 2s ease; color:rgba(255,255,255,0.5);
+  }
+  #stage-next {
+    margin-top:2.5rem; font-size:0.65rem; letter-spacing:0.25em;
+    color:rgba(255,255,255,0.55); cursor:pointer;
+    border:1px solid rgba(255,255,255,0.22); background:rgba(255,255,255,0.05);
+    font-family:inherit; font-style:italic; padding:0.45rem 1.4rem;
+    border-radius:20px; transition:opacity 0.6s ease,color 0.5s ease,border-color 0.5s ease;
+    opacity:0; pointer-events:none;
+  }
+  #stage-next:hover { color:rgba(255,255,255,0.9); border-color:rgba(255,255,255,0.45); }
+  #stage-next.stage-next-blue,
+  #stage-next.stage-next-star,
+  #stage-next.stage-next-purple {
+    position:fixed; bottom:2.5rem; left:50%;
+    transform:translateX(-50%); margin-top:0; z-index:12;
+  }
+  #cursor {
+    position:fixed; width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,0.6); pointer-events:none;
+    z-index:100; transform:translate(-50%,-50%); mix-blend-mode:screen;
+  }
+  #final {
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:20; opacity:0; pointer-events:none;
+    transition:opacity 3s ease; padding:3rem; text-align:center;
+  }
+  #final.visible { opacity:1; pointer-events:auto; }
+  #final-text {
+    font-size:clamp(0.8rem,2.4vw,1.28rem); font-weight:300;
+    line-height:2.2; letter-spacing:0.1em;
+    color:rgba(255,255,255,0.8); max-width:500px;
+  }
+  #final-sub { margin-top:3rem; font-size:0.75rem; letter-spacing:0.25em; color:rgba(255,255,255,0.3); font-style:italic; }
+  #restart {
+    margin-top:2rem; font-size:0.65rem; letter-spacing:0.3em;
+    color:rgba(255,255,255,0.45); cursor:pointer;
+    border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.04);
+    font-family:inherit; font-style:italic; padding:0.4rem 1.2rem;
+    border-radius:20px; transition:color 0.5s ease,border-color 0.5s ease;
+  }
+  #restart:hover { color:rgba(255,255,255,0.85); border-color:rgba(255,255,255,0.45); }
+  #start-over {
+    margin-top:0.8rem; font-size:0.6rem; letter-spacing:0.25em;
+    color:rgba(255,255,255,0.25); cursor:pointer; border:none; background:none;
+    font-family:inherit; font-style:italic; transition:color 0.5s ease;
+  }
+  #start-over:hover { color:rgba(255,255,255,0.55); }
+  .ripple {
+    position:fixed; border-radius:50%; pointer-events:none; z-index:5;
+    transform:translate(-50%,-50%) scale(0); animation:ripple-out 2s ease-out forwards;
+  }
+  @keyframes ripple-out { to{transform:translate(-50%,-50%) scale(1);opacity:0} }
+  @media (hover:hover) and (pointer:fine) and (min-width:768px) {
+    #word { font-size:clamp(0.896rem,1.92vw,1.408rem); }
+    #word-note { font-size:clamp(0.52rem,1.44vw,0.656rem); }
+    #subtext { font-size:clamp(0.48rem,1.28vw,0.576rem); }
+    #final-text { font-size:clamp(0.64rem,1.92vw,1.024rem); }
+    .star-name-input { font-size:clamp(0.555rem,1.434vw,0.699rem); }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<canvas id="rose-canvas"></canvas>
+<canvas id="petal-canvas"></canvas>
+<div id="cursor"></div>
+
+<!-- 音声(自動再生対応:ユーザータップ後に発動) -->
+
+<div id="star-name-overlay" hidden>
+  <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 1" /></div>
+  <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 2" /></div>
+  <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 3" /></div>
+  <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 4" /></div>
+  <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 5" /></div>
+</div>
+<div id="stage">
+  <div id="word">閉ざされた空間、しかしとても美しい空間</div>
+  <div id="word-en"></div>
+  <div id="word-note-en"></div>
+  <div id="word-note"></div>
+  <div id="subtext"></div>
+  <button type="button" id="stage-next">→next</button>
+  <div id="hint">touch to begin</div>
+</div>
+<div id="final">
+  <div id="final-text"></div>
+  <div id="final-sub"></div>
+  <button id="restart">← back</button>
+</div>
+
+<script>
+// ---- Particle canvas ----
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = innerWidth; canvas.height = innerHeight;
+window.addEventListener('resize', () => { canvas.width=innerWidth; canvas.height=innerHeight; });
+
+const particles = [];
+class Particle {
+  constructor(x,y,stage) {
+    this.x=x; this.y=y;
+    this.vx=(Math.random()-0.5)*1.2; this.vy=(Math.random()-0.5)*1.2-0.3;
+    this.life=1; this.decay=0.008+Math.random()*0.008; this.size=Math.random()*2+0.5;
+    const c = stage<2?['120,120,150']:stage<3?['180,160,200','200,180,220']:['255,220,180','220,180,255'];
+    this.color=c[Math.floor(Math.random()*c.length)];
+  }
+  update(){this.x+=this.vx;this.y+=this.vy;this.vy-=0.01;this.life-=this.decay;}
+  draw(){ctx.globalAlpha=this.life*0.6;ctx.fillStyle=`rgb(${this.color})`;ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();}
+}
+(function loop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=particles.length-1;i>=0;i--){particles[i].update();particles[i].draw();if(particles[i].life<=0)particles.splice(i,1);}
+  requestAnimationFrame(loop);
+})();
+
+// ---- Audio (一度だけ再生制御) ----
+const audioSecretGarden = document.getElementById('audio-secret-garden');
+const audioBrightestStar = document.getElementById('audio-brightest-star');
+const audioWeAreHere = document.getElementById('audio-we-are-here');
+[audioSecretGarden, audioBrightestStar, audioWeAreHere].forEach(a => { if(a) a.volume = 0.6; });
+
+const playedAudios = new Set(); // 同一セッションで一度だけ再生
+
+function playOnce(audioEl, key){ return;
+  if(!audioEl) return;
+  if(playedAudios.has(key)) return;
+  playedAudios.add(key);
+  // 少し遅らせて場面の文字が現れた後に重ねる
+  setTimeout(()=>{
+    try {
+      audioEl.currentTime = 0;
+      const p = audioEl.play();
+      if(p && typeof p.catch === 'function') p.catch(()=>{ /* 自動再生失敗は静かに無視 */ });
+    } catch(e) { /* noop */ }
+  }, 800);
+}
+
+function resetAudios(){
+  playedAudios.clear();
+  [audioSecretGarden, audioBrightestStar, audioWeAreHere].forEach(a=>{
+    if(!a) return;
+    try { a.pause(); a.currentTime = 0; } catch(e){}
+  });
+}
+
+// ---- Purple rose background (stage 4) ----
+const roseCanvas = document.getElementById('rose-canvas');
+const rctx = roseCanvas.getContext('2d');
+roseCanvas.width = innerWidth; roseCanvas.height = innerHeight;
+window.addEventListener('resize', ()=>{ roseCanvas.width=innerWidth; roseCanvas.height=innerHeight; if(typeof currentStage!=='undefined'){ if(blueFallActive&&currentStage===2) startBlueFall(); else drawRoses(); } });
+
+function drawSinglePetal(cx, cy, len, wid, angle, color, alpha){
+  rctx.save();
+  rctx.translate(cx, cy);
+  rctx.rotate(angle);
+  rctx.globalAlpha = alpha;
+  rctx.beginPath();
+  rctx.moveTo(0, -len);
+  rctx.bezierCurveTo(-wid*1.2, -len*0.3, -wid*1.4, len*0.4, 0, len*0.9);
+  rctx.bezierCurveTo( wid*1.4,  len*0.4,  wid*1.2, -len*0.3, 0, -len);
+  rctx.fillStyle = color;
+  rctx.fill();
+  rctx.strokeStyle = color;
+  rctx.lineWidth = 0.3;
+  rctx.stroke();
+  rctx.restore();
+}
+
+function drawFallPetal(cx, cy, len, wid, angle, color, alpha){
+  rctx.save();
+  rctx.translate(cx, cy);
+  rctx.rotate(angle);
+  rctx.globalAlpha = alpha;
+  rctx.beginPath();
+  rctx.moveTo(0, -len);
+  rctx.bezierCurveTo(-wid*1.2, -len*0.3, -wid*1.4, len*0.26, -wid*0.52, len*0.48);
+  rctx.quadraticCurveTo(0, len*0.96, wid*0.52, len*0.48);
+  rctx.bezierCurveTo(wid*1.4, len*0.32, wid*1.2, -len*0.3, 0, -len);
+  rctx.fillStyle = color;
+  rctx.fill();
+  rctx.strokeStyle = color;
+  rctx.lineWidth = 0.3;
+  rctx.stroke();
+  rctx.restore();
+}
+
+function drawRose(cx, cy, baseSize, colorIn, spinAngle=0){
+  rctx.save();
+  rctx.translate(cx, cy);
+  rctx.rotate(spinAngle);
+  rctx.translate(-cx, -cy);
+  const p = typeof colorIn === 'number'
+    ? { h: colorIn, s1:58, s2:62, s3:66, l1:40, l2:35, l3:30, lc:22, sc:55 }
+    : {
+        h: colorIn.h,
+        s1: colorIn.s1 ?? 58, s2: colorIn.s2 ?? 62, s3: colorIn.s3 ?? 66,
+        l1: colorIn.l1 ?? 40, l2: colorIn.l2 ?? 35, l3: colorIn.l3 ?? 30,
+        lc: colorIn.lc ?? 22, sc: colorIn.sc ?? 55,
+      };
+  const c1 = `hsl(${p.h},${p.s1}%,${p.l1}%)`;
+  const c2 = `hsl(${p.h},${p.s2}%,${p.l2}%)`;
+  const c3 = `hsl(${p.h},${p.s3}%,${p.l3}%)`;
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2;
+    const px=cx+Math.cos(a)*baseSize*0.32;
+    const py=cy+Math.sin(a)*baseSize*0.32;
+    drawSinglePetal(px,py,baseSize*0.55,baseSize*0.28,a,c1,0.16);
+  }
+  for(let i=0;i<5;i++){
+    const a=(i/5)*Math.PI*2+Math.PI/5;
+    const px=cx+Math.cos(a)*baseSize*0.16;
+    const py=cy+Math.sin(a)*baseSize*0.16;
+    drawSinglePetal(px,py,baseSize*0.42,baseSize*0.22,a,c2,0.18);
+  }
+  for(let i=0;i<4;i++){
+    const a=(i/4)*Math.PI*2+0.5;
+    const px=cx+Math.cos(a)*baseSize*0.06;
+    const py=cy+Math.sin(a)*baseSize*0.06;
+    drawSinglePetal(px,py,baseSize*0.28,baseSize*0.16,a,c3,0.20);
+  }
+  rctx.save();
+  rctx.globalAlpha=0.15;
+  rctx.beginPath();
+  rctx.arc(cx,cy,baseSize*0.06,0,Math.PI*2);
+  rctx.fillStyle=`hsl(${p.h},${p.sc}%,${p.lc}%)`;
+  rctx.fill();
+  rctx.restore();
+  rctx.restore();
+}
+
+const roses = [
+  {x:0.13,y:0.18,s:0.13,h:280},{x:0.84,y:0.14,s:0.10,h:270},
+  {x:0.50,y:0.74,s:0.12,h:290},{x:0.07,y:0.77,s:0.09,h:275},
+  {x:0.87,y:0.62,s:0.11,h:285},
+];
+const blueRoses = [
+  {x:0.20,y:0.25,s:0.11,h:200},{x:0.78,y:0.20,s:0.09,h:195},
+  {x:0.50,y:0.68,s:0.12,h:205},{x:0.10,y:0.65,s:0.10,h:198},
+  {x:0.85,y:0.70,s:0.10,h:202},
+];
+let blueFallActive=false, blueFallPetals=[], blueFallStart=0, blueFallRaf=null;
+class BlueFallPetal{
+  constructor(){
+    const rose=blueRoses[2];
+    const minSz=Math.min(innerWidth,innerHeight);
+    const bs=rose.s*minSz;
+    this.x=innerWidth*0.5;
+    this.startY=-bs*0.8;
+    this.y=this.startY;
+    this.targetX=innerWidth*0.5;
+    this.targetY=innerHeight+bs*0.1;
+    this.duration=12000;
+    this.len=bs*0.42;
+    this.wid=this.len*0.28;
+    this.angle=Math.random()*Math.PI*2;
+    this.rotSpeed=0.004;
+    this.hue=rose.h;
+    this.light=38;
+    this.alpha=0.22;
+    this.swayAmp=28;
+    this.done=false;
+  }
+  update(elapsed){
+    const t=Math.min(1,elapsed/this.duration);
+    if(t>=1){ this.done=true; return false; }
+    const ease=1-Math.pow(1-t,2.2);
+    this.y=this.startY+(this.targetY-this.startY)*ease;
+    this.x=this.targetX+Math.sin(t*Math.PI*1.5)*this.swayAmp*(1-t*0.3);
+    this.angle+=this.rotSpeed;
+    return true;
+  }
+  draw(){
+    drawFallPetal(this.x,this.y,this.len,this.wid,this.angle,
+      `hsl(${this.hue},58%,${this.light}%)`,this.alpha);
+  }
+}
+function startBlueFall(){
+  stopBlueFall();
+  blueFallActive=true;
+  blueFallPetals=[new BlueFallPetal()];
+  roseCanvas.style.opacity='1';
+  blueFallStart=performance.now();
+  function tick(now){
+    if(!blueFallActive) return;
+    const elapsed=now-blueFallStart;
+    rctx.clearRect(0,0,roseCanvas.width,roseCanvas.height);
+    let anyVisible=false;
+    blueFallPetals.forEach(p=>{ if(p.update(elapsed)){ p.draw(); anyVisible=true; } });
+    if(elapsed<12200||anyVisible) blueFallRaf=requestAnimationFrame(tick);
+  }
+  blueFallRaf=requestAnimationFrame(tick);
+}
+function stopBlueFall(){
+  blueFallActive=false;
+  if(blueFallRaf){ cancelAnimationFrame(blueFallRaf); blueFallRaf=null; }
+  blueFallPetals=[];
+}
+// 一番星シーン(ステージ5):1紫 2赤 3暗めの黄 4紺 5深緑
+const starRosePalette = [
+  { h: 280 },
+  { h: 2, s1:62, s2:66, s3:70, l1:44, l2:38, l3:32, lc:24, sc:58 },
+  { h: 46, s1:48, s2:52, s3:56, l1:36, l2:30, l3:24, lc:20, sc:50 },
+  { h: 232, s1:52, s2:56, s3:60, l1:28, l2:23, l3:18, lc:16, sc:48 },
+  { h: 152, s1:40, s2:44, s3:48, l1:30, l2:24, l3:19, lc:15, sc:42 },
+];
+function drawRoses(){
+  rctx.clearRect(0,0,roseCanvas.width,roseCanvas.height);
+  const stage = typeof currentStage !== 'undefined' ? currentStage : 0;
+  const list = stage===3 ? blueRoses : roses;
+  const minSz = Math.min(roseCanvas.width,roseCanvas.height);
+  const spin = stage===5 ? roseSpinAngle : 0;
+  list.forEach((r,i)=>{
+    const cx=r.x*roseCanvas.width, cy=r.y*roseCanvas.height, bs=r.s*minSz;
+    const color = stage===5 ? starRosePalette[i] : r.h;
+    drawRose(cx, cy, bs, color, spin);
+  });
+}
+let roseSpinActive = false;
+let roseSpinAngle = 0;
+let roseSpinRaf = null;
+function startRoseSpin(){
+  if(roseSpinActive) return;
+  roseSpinActive = true;
+  function tick(){
+    if(!roseSpinActive) return;
+    roseSpinAngle += 0.0018;
+    drawRoses();
+    roseSpinRaf = requestAnimationFrame(tick);
+  }
+  tick();
+}
+function stopRoseSpin(){
+  roseSpinActive = false;
+  if(roseSpinRaf){ cancelAnimationFrame(roseSpinRaf); roseSpinRaf = null; }
+  roseSpinAngle = 0;
+}
+// ---- Falling petals (final) — 13枚 ----
+const petalCanvas = document.getElementById('petal-canvas');
+const pctx = petalCanvas.getContext('2d');
+petalCanvas.width = innerWidth; petalCanvas.height = innerHeight;
+window.addEventListener('resize', ()=>{ petalCanvas.width=innerWidth; petalCanvas.height=innerHeight; });
+
+const petals = [];
+let petalActive = false;
+
+class Petal {
+  constructor(){ this.reset(); this.y=Math.random()*innerHeight; }
+  reset(){
+    this.x=Math.random()*innerWidth; this.y=-20;
+    this.size=8+Math.random()*12; this.speedY=0.3+Math.random()*0.5;
+    this.speedX=(Math.random()-0.5)*0.4; this.angle=Math.random()*Math.PI*2;
+    this.rotSpeed=(Math.random()-0.5)*0.015; this.sway=0.008+Math.random()*0.012;
+    this.swayOffset=Math.random()*Math.PI*2; this.opacity=0.5+Math.random()*0.4;
+    const c=[[130,10,25],[150,15,30],[120,8,22],[160,20,35],[140,12,28]][Math.floor(Math.random()*5)];
+    this.r=c[0];this.g=c[1];this.b=c[2];
+  }
+  update(){
+    this.y+=this.speedY; this.x+=this.speedX+Math.sin(this.y*this.sway+this.swayOffset)*0.6;
+    this.angle+=this.rotSpeed; if(this.y>innerHeight+30)this.reset();
+  }
+  draw(){
+    pctx.save(); pctx.translate(this.x,this.y); pctx.rotate(this.angle); pctx.globalAlpha=this.opacity;
+    pctx.beginPath();
+    pctx.moveTo(0,-this.size);
+    pctx.bezierCurveTo(this.size*0.8,-this.size*0.5, this.size*0.9,this.size*0.3, 0,this.size*0.6);
+    pctx.bezierCurveTo(-this.size*0.9,this.size*0.3, -this.size*0.8,-this.size*0.5, 0,-this.size);
+    pctx.fillStyle=`rgba(${this.r},${this.g},${this.b},1)`; pctx.fill();
+    pctx.beginPath();
+    pctx.moveTo(0,-this.size*0.8);
+    pctx.bezierCurveTo(this.size*0.3,-this.size*0.4, this.size*0.2,this.size*0.1, 0,this.size*0.2);
+    pctx.bezierCurveTo(-this.size*0.15,this.size*0.1, -this.size*0.2,-this.size*0.4, 0,-this.size*0.8);
+    pctx.fillStyle=`rgba(255,120,130,0.2)`; pctx.fill();
+    pctx.restore();
+  }
+}
+for(let i=0;i<13;i++) petals.push(new Petal());
+(function loopPetals(){
+  if(!petalActive){requestAnimationFrame(loopPetals);return;}
+  pctx.clearRect(0,0,petalCanvas.width,petalCanvas.height);
+  petals.forEach(p=>{p.update();p.draw();});
+  requestAnimationFrame(loopPetals);
+})();
+
+// ---- Cursor ----
+const cursor=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';});
+
+// ---- State ----
+let taps=0, currentStage=0;
+let lastTapTime=0; // 連打防止
+drawRoses();
+
+const stages=[
+  {word:'閉ざされた空間、しかしとても美しい空間',                          sub:'',                               bg:'#0a0a0f', hint:'touch to begin',            taps:1},
+  {word:'瞼を閉じてみる。そこは自由な空間、あなただけの空間',                          sub:'',                               bg:'#0d0a14', hint:'',                           taps:5},
+  {word:'いろいろな愛の形',                              sub:'— 美しい距離 —',                 bg:'#0e0a12', hint:'',                           taps:5},
+  {word:'世界が何色だったとしても\nあなたは何色に染めたい？',         sub:'',                               bg:'#18181a', hint:'', taps:5, roses:'blue'},
+  {word:'現実と内面の自分を行き来する',                   sub:'',                               bg:'#0a0a12', hint:'', taps:5, roses:'purple'},
+  {word:'あなたの一番星はだれですか?',                  sub:'',                               bg:'#0a0c12', hint:'', taps:8},
+];
+const finalLastLine='二人はずっと二人はここにいる';
+let finalTypeTimer=null;
+
+const word=document.getElementById('word');
+const wordEn=document.getElementById('word-en');
+const wordNote=document.getElementById('word-note');
+const wordNoteEn=document.getElementById('word-note-en');
+const subtext=document.getElementById('subtext');
+const hint=document.getElementById('hint');
+const final=document.getElementById('final');
+const finalText=document.getElementById('final-text');
+const stageNext=document.getElementById('stage-next');
+const starNameOverlay=document.getElementById('star-name-overlay');
+
+function layoutStarNameSlots(){
+  if(!starNameOverlay || starNameOverlay.hidden) return;
+  const minSz = Math.min(innerWidth, innerHeight);
+  roses.forEach((r,i)=>{
+    const slot = starNameOverlay.children[i];
+    if(!slot) return;
+    const off = Math.max(20, r.s * minSz * 0.52);
+    slot.style.left = (r.x * 100) + '%';
+    slot.style.top = `calc(${(r.y * 100)}% + ${off}px)`;
+  });
+}
+
+function syncStarSceneUi(show){
+  if(show){
+    wordEn.textContent='';
+    wordEn.classList.remove('visible');
+    wordNote.textContent='（この名前はあなたの中だけに。保存も送信もされません）';
+    wordNote.classList.add('visible');
+    wordNoteEn.innerHTML='Write the name of someone you love<br>— this name stays only with you. nothing is saved or sent.';
+    wordNoteEn.classList.add('visible');
+    starNameOverlay.hidden=false;
+    layoutStarNameSlots();
+    startRoseSpin();
+  } else {
+    stopRoseSpin();
+    wordEn.textContent='';
+    wordEn.classList.remove('visible');
+    wordNote.textContent='';
+    wordNote.classList.remove('visible');
+    wordNoteEn.textContent='';
+    wordNoteEn.classList.remove('visible');
+    starNameOverlay.hidden=true;
+  }
+}
+
+document.querySelectorAll('.star-name-input').forEach(inp=>{
+  inp.addEventListener('click',e=>e.stopPropagation());
+  inp.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+  inp.addEventListener('focus',e=>e.stopPropagation());
+});
+window.addEventListener('resize',()=>{ if(currentStage===5) layoutStarNameSlots(); });
+
+function syncStageNext(){
+  const show = currentStage>=1 && currentStage<stages.length && !final.classList.contains('visible');
+  stageNext.style.opacity = show ? '1' : '0';
+  stageNext.style.pointerEvents = show ? 'auto' : 'none';
+  stageNext.classList.toggle('stage-next-blue', currentStage===3);
+  stageNext.classList.toggle('stage-next-purple', currentStage===4);
+  stageNext.classList.toggle('stage-next-star', currentStage===5);
+}
+
+function spawnParticles(x,y,n=12){for(let i=0;i<n;i++)particles.push(new Particle(x,y,currentStage));}
+function createRipple(x,y){
+  const r=document.createElement('div'); r.className='ripple';
+  const sz=150+taps*15, a=0.04+currentStage*0.03;
+  r.style.cssText=`left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;border:1px solid rgba(255,255,255,${a})`;
+  document.body.appendChild(r); setTimeout(()=>r.remove(),2000);
+}
+
+// 花びら揺れエフェクト(水色・紫・一番星バラ場面)
+function shimmerRoses(){
+  rctx.save();
+  rctx.globalAlpha=0.06;
+  rctx.fillStyle='rgba(255,255,255,1)';
+  const list = currentStage===3 ? blueRoses : roses;
+  list.forEach(r=>{
+    const cx=r.x*roseCanvas.width, cy=r.y*roseCanvas.height;
+    const sz=r.s*Math.min(roseCanvas.width,roseCanvas.height)*0.15;
+    rctx.beginPath(); rctx.arc(cx,cy,sz,0,Math.PI*2); rctx.fill();
+  });
+  rctx.restore();
+  setTimeout(()=>drawRoses(),300);
+}
+
+function updateStage(){
+  const s=stages[currentStage];
+  word.style.opacity='0'; word.style.transform='translateY(10px)'; subtext.style.opacity='0';
+
+  // バラ背景の切り替え
+  if(s.roses==='blue'){ stopBlueFall(); drawRoses(); setTimeout(()=>roseCanvas.style.opacity='1',400); }
+  else if(s.roses==='purple'||currentStage===5){ stopBlueFall(); drawRoses(); setTimeout(()=>roseCanvas.style.opacity='1',400); }
+  else if(currentStage===2){ stopBlueFall(); startBlueFall(); }
+  else { stopBlueFall(); roseCanvas.style.opacity='0'; }
+
+  setTimeout(()=>{
+    word.textContent = s.word||'';
+    document.body.style.background=s.bg;
+    word.style.opacity= s.word?'1':'0';
+    word.style.transform='translateY(0)';
+
+    if(s.roses){ hint.style.display='none'; hint.style.opacity='0'; }
+
+    if(currentStage===5) syncStarSceneUi(true);
+    else syncStarSceneUi(false);
+
+    if(s.sub&&!s.roses){
+      subtext.innerHTML=s.sub.replace(/\n/g,'<br>');
+      setTimeout(()=>subtext.style.opacity='1',800);
+    }
+    if(s.roses){
+      subtext.innerHTML=s.sub;
+      if(s.sub) setTimeout(()=>subtext.style.opacity='0.5',800);
+      else subtext.style.opacity='0';
+    }
+    syncStageNext();
+
+    // 場面ごとの音声(一度だけ)
+    if(currentStage===5){
+      playOnce(audioBrightestStar, 'brightest-star');
+    }
+  },600);
+}
+
+function showFinal(){
+  syncStarSceneUi(false);
+  stopRoseSpin();
+  stopBlueFall();
+  stageNext.style.opacity='0'; stageNext.style.pointerEvents='none';
+  word.style.opacity='0'; subtext.style.opacity='0'; roseCanvas.style.opacity='0';
+  if(finalTypeTimer){ clearInterval(finalTypeTimer); finalTypeTimer=null; }
+  setTimeout(()=>{
+    document.body.style.background='#0a0810';
+    final.classList.add('visible');
+    finalText.innerHTML='<span id="final-last-line"></span>';
+    const lastEl=document.getElementById('final-last-line');
+    let i=0;
+    finalTypeTimer=setInterval(()=>{
+      if(i>=finalLastLine.length){
+        clearInterval(finalTypeTimer);
+        finalTypeTimer=null;
+        return;
+      }
+      lastEl.textContent+=finalLastLine[i++];
+    },360);
+    setTimeout(()=>{ petalActive=true; petalCanvas.style.opacity='1'; },1000);
+    // 最終画面の音声(一度だけ)
+    playOnce(audioWeAreHere, 'we-are-here');
+  },1000);
+}
+
+// タップ対象を全画面に
+function goNext(){
+  if(currentStage<1 || currentStage>=stages.length) return;
+  if(currentStage===stages.length-1){ showFinal(); }
+  else { currentStage++; updateStage(); }
+}
+
+stageNext.addEventListener('touchstart',e=>{ e.stopPropagation(); },{passive:true});
+stageNext.addEventListener('click',e=>{ e.stopPropagation(); goNext(); });
+
+document.getElementById('stage').addEventListener('click',handleTap);
+document.getElementById('stage').addEventListener('touchstart',e=>{e.preventDefault();handleTap(e.touches[0]);},{passive:false});
+
+function handleTap(e){
+  // 連打防止:0.8秒インターバル
+  const now = Date.now();
+  if(now - lastTapTime < 800) return;
+  lastTapTime = now;
+
+  const x=e.clientX||innerWidth/2, y=e.clientY||innerHeight/2;
+  taps++;
+  spawnParticles(x,y,6+currentStage*3);
+  createRipple(x,y);
+  word.classList.add('touched');
+
+  // バラ場面・一番星場面では揺れエフェクト
+  if(stages[currentStage]?.roses || currentStage===5) shimmerRoses();
+
+  if(taps===1){
+    hint.style.opacity='0'; setTimeout(()=>hint.style.display='none',1000);
+    // 最初のタップで世界が開く瞬間の音声
+    playOnce(audioSecretGarden, 'secret-garden');
+  }
+
+  // 初期画面のみタップ回数で次へ
+  if(currentStage===0 && taps>=stages[0].taps){
+    currentStage++;
+    updateStage();
+  }
+}
+
+document.getElementById('restart').addEventListener('click',()=>{
+  if(finalTypeTimer){ clearInterval(finalTypeTimer); finalTypeTimer=null; }
+  final.classList.remove('visible');
+  petalActive=false; petalCanvas.style.opacity='0';
+  taps=0; currentStage=0;
+  resetAudios();
+  word.classList.remove('touched');
+  syncStarSceneUi(false);
+  stopBlueFall();
+  document.body.style.background='#0a0a0f';
+  word.textContent=stages[0].word;
+  word.style.opacity='1';
+  subtext.style.opacity='0';
+  hint.style.display='block'; hint.style.opacity='';
+  hint.textContent='touch to begin';
+  syncStageNext();
+});
+</script>
+</body>
+</html>
