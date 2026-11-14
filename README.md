@@ -2,7 +2,7 @@
 
 ![シークレット1](secret1.png)
 
-![シークレット2](secret2.png)# Welcome to your Lovable project
+![シークレット2](secret2.png)# Welcome to your L
 
 ![シークレット3](secret3.png)
 
