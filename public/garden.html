@@ -109,6 +109,22 @@
     position:fixed; bottom:2.5rem; left:50%;
     transform:translateX(-50%); margin-top:0; z-index:12;
   }
+  /* スマホ: 下固定だとブラウザUIに隠れ、バラ画面で進めなくなる */
+  @media (max-width:767px), (hover:none) and (pointer:coarse) {
+    #stage-next {
+      margin-top:2rem;
+      padding:0.7rem 1.8rem;
+      font-size:0.8rem;
+      min-height:44px;
+      touch-action:manipulation;
+    }
+    #stage-next.stage-next-blue,
+    #stage-next.stage-next-star,
+    #stage-next.stage-next-purple {
+      position:relative; bottom:auto; left:auto;
+      transform:none; margin-top:2rem; z-index:12;
+    }
+  }
   #cursor {
     position:fixed; width:6px; height:6px; border-radius:50%;
     background:rgba(255,255,255,0.6); pointer-events:none;
@@ -650,13 +666,22 @@ function showFinal(){
 }
 
 // タップ対象を全画面に
+let nextLock=false;
 function goNext(){
+  if(nextLock) return;
   if(currentStage<1 || currentStage>=stages.length) return;
+  nextLock=true;
+  setTimeout(()=>{ nextLock=false; },500);
   if(currentStage===stages.length-1){ showFinal(); }
   else { currentStage++; updateStage(); }
 }
 
 stageNext.addEventListener('touchstart',e=>{ e.stopPropagation(); },{passive:true});
+stageNext.addEventListener('touchend',e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  goNext();
+},{passive:false});
 stageNext.addEventListener('click',e=>{ e.stopPropagation(); goNext(); });
 
 document.getElementById('stage').addEventListener('click',handleTap);
