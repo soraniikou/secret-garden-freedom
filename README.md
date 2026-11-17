@@ -1,8 +1,8 @@
-![シークレット](secret.png)
+![1973](1973.png)
 
 ![シークレット1](secret1.png)
 
-![シークレット2](secret2.png)# Welcome to your Lovable project
+![シークレット2](secret2.png)
 
 ![シークレット3](secret3.png)
 
