@@ -546,10 +546,10 @@ function syncStarSceneUi(show){
   if(show){
     wordEn.textContent='';
     wordEn.classList.remove('visible');
-    wordNote.textContent='（この名前はあなたの中だけに。保存も送信もされません）';
+    wordNoteEn.textContent='';
+    wordNoteEn.classList.remove('visible');
+    wordNote.textContent='心の中で名前を呼んで';
     wordNote.classList.add('visible');
-    wordNoteEn.innerHTML='Write the name of someone you love<br>— this name stays only with you. nothing is saved or sent.';
-    wordNoteEn.classList.add('visible');
     starNameOverlay.hidden=false;
     layoutStarNameSlots();
     startRoseSpin();
