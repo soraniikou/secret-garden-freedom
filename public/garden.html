@@ -194,7 +194,7 @@
   <div class="star-name-slot"><input type="text" class="star-name-input" maxlength="24" autocomplete="off" aria-label="名前 5" /></div>
 </div>
 <div id="stage">
-  <div id="word">閉ざされた空間、美しい世界</div>
+  <div id="word">A closed room. A beautiful world.</div>
   <div id="word-en"></div>
   <div id="word-note-en"></div>
   <div id="word-note"></div>
@@ -511,14 +511,14 @@ let lastTapTime=0; // 連打防止
 drawRoses();
 
 const stages=[
-  {word:'閉ざされた空間、美しい世界',                          sub:'',                               bg:'#0a0a0f', hint:'touch to begin',            taps:1},
-  {word:'瞼を閉じてみる。そこは自由な空間、あなただけの空間',                          sub:'',                               bg:'#0d0a14', hint:'',                           taps:5},
-  {word:'いろいろな愛の形',                              sub:'— 美しい距離 —',                 bg:'#0e0a12', hint:'',                           taps:5},
-  {word:'世界が何色だったとしても\nあなたは何色に染めたい？',         sub:'',                               bg:'#18181a', hint:'', taps:5, roses:'blue'},
-  {word:'現実と内面の自分を行き来する',                   sub:'',                               bg:'#0a0a12', hint:'', taps:5, roses:'purple'},
-  {word:'あなたの一番星はだれですか?',                  sub:'',                               bg:'#0a0c12', hint:'', taps:8},
+  {word:'A closed room. A beautiful world.',                          sub:'',                               bg:'#0a0a0f', hint:'touch to begin',            taps:1},
+  {word:'Close your eyes.\nHere is a free space, yours alone.',                          sub:'',                               bg:'#0d0a14', hint:'',                           taps:5},
+  {word:'Love has many shapes.',                              sub:'— A Beautiful Distance —',                 bg:'#0e0a12', hint:'',                           taps:5},
+  {word:'Whatever color the world may be,\nwhat color would you like to paint it?',         sub:'',                               bg:'#18181a', hint:'', taps:5, roses:'blue'},
+  {word:'Moving between the real world and the self within',                   sub:'',                               bg:'#0a0a12', hint:'', taps:5, roses:'purple'},
+  {word:'Who is your brightest star?',                  sub:'',                               bg:'#0a0c12', hint:'', taps:8},
 ];
-const finalLastLine='あなたの描いた世界が\nあなたの中の真実になっていく。';
+const finalLastLine='The world you have painted\nmay become the truth within you.';
 let finalTypeTimer=null;
 
 const word=document.getElementById('word');
@@ -550,7 +550,7 @@ function syncStarSceneUi(show){
     wordEn.classList.remove('visible');
     wordNoteEn.textContent='';
     wordNoteEn.classList.remove('visible');
-    wordNote.textContent='心の中で名前を呼んで';
+    wordNote.textContent='Call their name in your heart.';
     wordNote.classList.add('visible');
     starNameOverlay.hidden=false;
     layoutStarNameSlots();
